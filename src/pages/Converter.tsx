@@ -63,7 +63,7 @@ export default function Converter() {
     title: 'Free Online Image Converter — No Upload Required | NullUpload',
     description:
       'Convert images between JPG, PNG, WebP, and AVIF in your browser. No uploads, no servers, 100% private.',
-    canonical: 'https://nullupload.com/convert',
+    canonical: 'https://nullupload.dev/convert',
   })
 
   const { isPro } = useTier()

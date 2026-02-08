@@ -109,7 +109,7 @@ export default function Home() {
     title: 'NullUpload — Free Privacy-First Image Tools | No Upload Required',
     description:
       'Compress, convert, resize, and strip metadata from images — 100% in your browser. No uploads, no servers, no tracking. Your files go nowhere.',
-    canonical: 'https://nullupload.com/',
+    canonical: 'https://nullupload.dev/',
   })
 
   return (

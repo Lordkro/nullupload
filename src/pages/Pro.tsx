@@ -68,7 +68,7 @@ export default function Pro() {
     title: 'NullUpload Pro — Unlock Unlimited Image Processing',
     description:
       'Upgrade to NullUpload Pro for unlimited file processing, maximum quality, unlimited batch processing, and an ad-free experience.',
-    canonical: 'https://nullupload.com/pro',
+    canonical: 'https://nullupload.dev/pro',
   })
 
   const [email, setEmail] = useState('')

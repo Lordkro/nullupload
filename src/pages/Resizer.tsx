@@ -75,7 +75,7 @@ export default function Resizer() {
     title: 'Free Online Image Resizer — No Upload Required | NullUpload',
     description:
       'Resize images by exact dimensions or percentage in your browser. No uploads, no servers, 100% private.',
-    canonical: 'https://nullupload.com/resize',
+    canonical: 'https://nullupload.dev/resize',
   })
 
   const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =

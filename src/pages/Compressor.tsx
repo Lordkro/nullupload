@@ -27,7 +27,7 @@ export default function Compressor() {
     title: 'Free Online Image Compressor — No Upload Required | NullUpload',
     description:
       'Compress images in your browser with adjustable quality. No uploads, no servers, 100% private. Supports JPG, PNG, WebP, and AVIF.',
-    canonical: 'https://nullupload.com/compress',
+    canonical: 'https://nullupload.dev/compress',
   })
 
   const { isPro } = useTier()

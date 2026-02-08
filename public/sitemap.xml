@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://nullupload.com/</loc>
+    <loc>https://nullupload.dev/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://nullupload.com/compress</loc>
+    <loc>https://nullupload.dev/compress</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://nullupload.com/convert</loc>
+    <loc>https://nullupload.dev/convert</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://nullupload.com/resize</loc>
+    <loc>https://nullupload.dev/resize</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://nullupload.com/metadata</loc>
+    <loc>https://nullupload.dev/metadata</loc>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>

@@ -157,7 +157,7 @@ export default function MetadataStripper() {
     title: 'Free Online EXIF Metadata Remover — No Upload Required | NullUpload',
     description:
       'Strip EXIF metadata, GPS location, and camera info from images in your browser. No uploads, no servers, 100% private.',
-    canonical: 'https://nullupload.com/metadata',
+    canonical: 'https://nullupload.dev/metadata',
   })
 
   const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =
