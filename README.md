@@ -1,10 +1,12 @@
-# 🔨 NullUpload — Privacy-First Image Tools
+# 🔨 NullUpload — Privacy-First Image & PDF Tools
 
 **Your files never leave your browser.**
 
-NullUpload is a collection of image processing tools that run **100% client-side**. No uploads, no servers, no tracking. Everything happens right in your browser using the Canvas API, Web Workers, and lightweight libraries.
+NullUpload is a collection of image and PDF processing tools that run **100% client-side**. No uploads, no servers, no tracking. Everything happens right in your browser using the Canvas API, Web Workers, and lightweight libraries.
 
 ## ✨ Features
+
+### Image Tools
 
 | Tool | What it does |
 |------|-------------|
@@ -12,6 +14,14 @@ NullUpload is a collection of image processing tools that run **100% client-side
 | **Format Converter** | Convert between JPEG, PNG, WebP, and AVIF |
 | **Image Resizer** | Resize by exact pixels or percentage with aspect-ratio lock |
 | **EXIF Stripper** | Remove all metadata (GPS, camera info, timestamps) and see what was found |
+
+### PDF Tools
+
+| Tool | What it does |
+|------|-------------|
+| **PDF Merge** | Combine multiple PDF files into one document with drag-to-reorder |
+| **PDF Split** | Extract specific pages or page ranges from a PDF file |
+| **PDF Compress** | Reduce PDF file sizes with adjustable quality settings (low/medium/high) |
 
 ## 🛡️ Privacy
 
@@ -37,7 +47,9 @@ npm run build
 
 - **Vite** + **React** + **TypeScript**
 - **Tailwind CSS v4** for styling
-- **browser-image-compression** for compression
+- **browser-image-compression** for image compression
+- **pdf-lib** for PDF merging, splitting, and manipulation
+- **pdfjs-dist** for PDF rendering and previews
 - **Canvas API** for format conversion and resizing
 - **piexifjs** for EXIF reading and stripping
 - **react-dropzone** for drag & drop
@@ -60,9 +72,13 @@ src/
 │   ├── Compressor.tsx
 │   ├── Converter.tsx
 │   ├── Resizer.tsx
-│   └── MetadataStripper.tsx
+│   ├── MetadataStripper.tsx
+│   ├── PdfMerge.tsx
+│   ├── PdfSplit.tsx
+│   └── PdfCompress.tsx
 ├── utils/
-│   └── format.ts       # File size formatting helpers
+│   ├── format.ts       # File size formatting helpers
+│   └── pdf.ts          # PDF loading and thumbnail rendering
 ├── types/
 │   └── piexifjs.d.ts   # Type declarations for piexifjs
 ├── App.tsx             # Router setup

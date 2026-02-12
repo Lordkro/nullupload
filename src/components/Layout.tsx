@@ -1,13 +1,31 @@
 import { Outlet, NavLink, Link } from 'react-router-dom'
-import { Shield, Minimize2, RefreshCw, Scaling, FileX2, Sparkles } from 'lucide-react'
+import {
+  Shield,
+  Minimize2,
+  RefreshCw,
+  Scaling,
+  FileX2,
+  Sparkles,
+  FileText,
+  Scissors,
+  Merge,
+} from 'lucide-react'
 import Logo from './Logo'
 
-const nav = [
+const imageNav = [
   { to: '/compress', label: 'Compress', icon: Minimize2 },
   { to: '/convert', label: 'Convert', icon: RefreshCw },
   { to: '/resize', label: 'Resize', icon: Scaling },
   { to: '/metadata', label: 'Strip EXIF', icon: FileX2 },
 ]
+
+const pdfNav = [
+  { to: '/pdf/merge', label: 'Merge PDF', icon: Merge },
+  { to: '/pdf/split', label: 'Split PDF', icon: Scissors },
+  { to: '/pdf/compress', label: 'Compress PDF', icon: FileText },
+]
+
+const allNav = [...imageNav, ...pdfNav]
 
 export default function Layout() {
   return (
@@ -26,7 +44,29 @@ export default function Layout() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {nav.map(({ to, label, icon: Icon }) => (
+            {/* Image tools */}
+            {imageNav.map(({ to, label, icon: Icon }) => (
+              <NavLink
+                key={to}
+                to={to}
+                className={({ isActive }) =>
+                  `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-brand-600/20 text-brand-400'
+                      : 'text-surface-200 hover:bg-surface-800 hover:text-white'
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </NavLink>
+            ))}
+
+            {/* Separator */}
+            <div className="w-px h-6 bg-surface-800 mx-1" />
+
+            {/* PDF tools */}
+            {pdfNav.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -70,7 +110,7 @@ export default function Layout() {
 
         {/* Mobile nav */}
         <nav className="md:hidden flex overflow-x-auto border-t border-surface-800 px-2">
-          {nav.map(({ to, label, icon: Icon }) => (
+          {allNav.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -112,7 +152,7 @@ export default function Layout() {
       {/* Footer */}
       <footer className="border-t border-surface-800 mt-auto">
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2.5 mb-4">
                 <Logo size={24} />
@@ -121,14 +161,29 @@ export default function Layout() {
                 </span>
               </div>
               <p className="text-surface-200 text-sm leading-relaxed max-w-xs">
-                Privacy-first image tools. Everything runs in your browser.
+                Privacy-first file tools. Everything runs in your browser.
                 Your files go nowhere.
               </p>
             </div>
             <div>
-              <h3 className="text-white font-semibold mb-3">Tools</h3>
+              <h3 className="text-white font-semibold mb-3">Image Tools</h3>
               <ul className="space-y-2">
-                {nav.map(({ to, label }) => (
+                {imageNav.map(({ to, label }) => (
+                  <li key={to}>
+                    <Link
+                      to={to}
+                      className="text-surface-200 hover:text-white text-sm transition"
+                    >
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="text-white font-semibold mb-3">PDF Tools</h3>
+              <ul className="space-y-2">
+                {pdfNav.map(({ to, label }) => (
                   <li key={to}>
                     <Link
                       to={to}

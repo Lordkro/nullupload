@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { Upload, ImageIcon } from 'lucide-react'
+import { Upload, ImageIcon, FileText } from 'lucide-react'
 
 interface DropZoneProps {
   onFiles: (files: File[]) => void
@@ -17,11 +17,21 @@ export default function DropZone({ onFiles, accept, multiple = true, label }: Dr
     [onFiles],
   )
 
+  const isPdf = accept ? 'application/pdf' in accept : false
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: accept ?? { 'image/*': ['.jpg', '.jpeg', '.png', '.webp', '.avif', '.gif', '.bmp'] },
     multiple,
   })
+
+  const IdleIcon = isPdf ? FileText : ImageIcon
+  const defaultLabel = isPdf
+    ? `Drop PDF${multiple ? 's' : ''} here, or click to select`
+    : `Drop images here, or click to select`
+  const formatHint = isPdf
+    ? `PDF files${multiple ? ' • Multiple files supported' : ''}`
+    : `Supports JPG, PNG, WebP, AVIF${multiple ? ' • Multiple files supported' : ''}`
 
   return (
     <div
@@ -44,15 +54,15 @@ export default function DropZone({ onFiles, accept, multiple = true, label }: Dr
           {isDragActive ? (
             <Upload className="w-9 h-9 animate-bounce" />
           ) : (
-            <ImageIcon className="w-9 h-9" />
+            <IdleIcon className="w-9 h-9" />
           )}
         </div>
         <div>
           <p className="text-white font-semibold text-lg">
-            {isDragActive ? 'Drop it here!' : label || 'Drop images here, or click to select'}
+            {isDragActive ? 'Drop it here!' : label || defaultLabel}
           </p>
           <p className="text-surface-700 text-sm mt-2">
-            Supports JPG, PNG, WebP, AVIF{multiple ? ' • Multiple files supported' : ''}
+            {formatHint}
           </p>
         </div>
         {!isDragActive && (

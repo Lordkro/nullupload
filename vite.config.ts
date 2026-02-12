@@ -11,6 +11,8 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           compression: ['browser-image-compression'],
           jszip: ['jszip'],
+          'pdf-lib': ['pdf-lib'],
+          'pdfjs-dist': ['pdfjs-dist'],
         },
       },
     },

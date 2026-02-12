@@ -20,14 +20,14 @@ const benefits = [
   {
     icon: Zap,
     title: 'Unlimited Processing',
-    desc: 'No daily file limits. Process as many images as you need, all day, every day.',
+    desc: 'No daily file limits. Process as many images and PDFs as you need, all day, every day.',
     free: '5 files per tool per day',
     pro: 'Unlimited',
   },
   {
     icon: Sliders,
     title: 'Maximum Quality Settings',
-    desc: 'Unlock the full quality range. Get the best possible output for your images.',
+    desc: 'Unlock the full quality range. Get the best possible output for your files.',
     free: 'Up to 80% quality',
     pro: 'Full 100% quality',
   },
@@ -65,9 +65,9 @@ const benefits = [
 
 export default function Pro() {
   useSEO({
-    title: 'NullUpload Pro — Unlock Unlimited Image Processing',
+    title: 'NullUpload Pro — Unlock Unlimited Image & PDF Processing',
     description:
-      'Upgrade to NullUpload Pro for unlimited file processing, maximum quality, unlimited batch processing, and an ad-free experience.',
+      'Upgrade to NullUpload Pro for unlimited image and PDF processing, maximum quality, unlimited batch processing, and an ad-free experience.',
     canonical: 'https://nullupload.dev/pro',
   })
 
