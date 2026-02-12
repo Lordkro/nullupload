@@ -282,7 +282,7 @@ export default function MetadataStripper() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 page-enter">
       <div className="mb-8 animate-fade-in">
-        <h1 className="text-3xl font-bold text-white mb-2">EXIF / Metadata Stripper</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Strip Metadata</h1>
         <p className="text-surface-200 mb-4">
           Remove hidden metadata from your images — GPS location, camera info, timestamps, and
           more. Drop multiple files at once.

@@ -174,7 +174,7 @@ export default function PdfSplit() {
       }
 
       const pdfBytes = await newDoc.save()
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+      const blob = new Blob([pdfBytes.buffer as BlobPart], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
 
       setResult({ url, size: blob.size })

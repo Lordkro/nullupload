@@ -167,7 +167,7 @@ export default function PdfMerge() {
       }
 
       const pdfBytes = await merged.save()
-      const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
+      const blob = new Blob([pdfBytes.buffer as BlobPart], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
 
       setResult({ url, size: blob.size })
