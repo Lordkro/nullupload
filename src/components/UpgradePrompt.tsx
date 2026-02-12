@@ -1,5 +1,6 @@
-import { X, Sparkles, Zap, Layers, Ban, Sliders, Clock } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { X, Sparkles, Zap, Layers, Ban, Sliders, Clock, Loader2, ArrowRight } from 'lucide-react'
+import { useTier } from '../contexts/TierContext'
 
 interface UpgradePromptProps {
   onClose: () => void
@@ -15,6 +16,18 @@ const benefits = [
 ]
 
 export default function UpgradePrompt({ onClose, toolName }: UpgradePromptProps) {
+  const { checkout } = useTier()
+  const [loading, setLoading] = useState(false)
+
+  const handleUpgrade = async () => {
+    setLoading(true)
+    try {
+      await checkout()
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
@@ -64,14 +77,19 @@ export default function UpgradePrompt({ onClose, toolName }: UpgradePromptProps)
 
         {/* Actions */}
         <div className="space-y-3">
-          <Link
-            to="/pro"
-            onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-brand-600/25"
+          <button
+            onClick={handleUpgrade}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-brand-600/25"
           >
-            <Sparkles className="w-4 h-4" />
-            Learn More About Pro
-          </Link>
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            Upgrade Now — $5.99/month
+            {!loading && <ArrowRight className="w-4 h-4" />}
+          </button>
           <button
             onClick={onClose}
             className="w-full flex items-center justify-center gap-2 text-surface-200 hover:text-white text-sm py-2.5 rounded-xl hover:bg-surface-800 transition"

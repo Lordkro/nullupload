@@ -1,0 +1,14 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+
+export default function handler(_req: VercelRequest, res: VercelResponse) {
+  if (_req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const publishableKey = process.env.STRIPE_PUBLISHABLE_KEY
+  if (!publishableKey) {
+    return res.status(500).json({ error: 'Stripe publishable key not configured' })
+  }
+
+  return res.status(200).json({ publishableKey })
+}

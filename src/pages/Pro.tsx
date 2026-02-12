@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Sparkles,
   Zap,
@@ -9,12 +10,12 @@ import {
   Shield,
   CheckCircle2,
   ArrowRight,
-  Mail,
   Crown,
+  Settings,
+  Loader2,
 } from 'lucide-react'
 import { useSEO } from '../hooks/useSEO'
-
-const WAITLIST_KEY = 'nullupload_waitlist'
+import { useTier } from '../contexts/TierContext'
 
 const benefits = [
   {
@@ -71,28 +72,48 @@ export default function Pro() {
     canonical: 'https://nullupload.dev/pro',
   })
 
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [alreadyJoined, setAlreadyJoined] = useState(false)
+  const { isPro, loading, checkout, openPortal, refreshStatus, subscription } = useTier()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [showCanceled, setShowCanceled] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email.trim()) return
+  // Handle post-checkout redirect
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const canceled = searchParams.get('canceled')
+    const sessionId = searchParams.get('session_id')
 
-    try {
-      const existing = JSON.parse(localStorage.getItem(WAITLIST_KEY) || '[]') as string[]
-      if (existing.includes(email.trim().toLowerCase())) {
-        setAlreadyJoined(true)
-        return
-      }
-      existing.push(email.trim().toLowerCase())
-      localStorage.setItem(WAITLIST_KEY, JSON.stringify(existing))
-    } catch {
-      localStorage.setItem(WAITLIST_KEY, JSON.stringify([email.trim().toLowerCase()]))
+    if (success === 'true' && sessionId) {
+      // Activate the session via status endpoint
+      refreshStatus(sessionId).then(() => {
+        setShowSuccess(true)
+        // Clean up URL params
+        setSearchParams({}, { replace: true })
+      })
+    } else if (canceled === 'true') {
+      setShowCanceled(true)
+      setSearchParams({}, { replace: true })
     }
+  }, [searchParams, refreshStatus, setSearchParams])
 
-    setSubmitted(true)
-    setEmail('')
+  const handleCheckout = async () => {
+    setCheckoutLoading(true)
+    try {
+      await checkout()
+    } finally {
+      setCheckoutLoading(false)
+    }
+  }
+
+  const handlePortal = async () => {
+    setPortalLoading(true)
+    try {
+      await openPortal()
+    } finally {
+      setPortalLoading(false)
+    }
   }
 
   return (
@@ -104,12 +125,19 @@ export default function Pro() {
 
         <div className="max-w-4xl mx-auto px-4 text-center relative">
           <div className="animate-fade-in">
-            <div className="inline-flex items-center gap-3 bg-gradient-to-r from-brand-500/10 to-purple-500/10 border border-brand-500/20 rounded-full px-6 py-3 mb-8">
-              <Crown className="w-6 h-6 text-brand-400" />
-              <span className="text-lg font-semibold bg-gradient-to-r from-brand-300 to-purple-300 bg-clip-text text-transparent">
-                Coming Soon
-              </span>
-            </div>
+            {isPro ? (
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-500/10 to-brand-500/10 border border-emerald-500/20 rounded-full px-6 py-3 mb-8">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                <span className="text-lg font-semibold text-emerald-300">Active Subscription</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-brand-500/10 to-purple-500/10 border border-brand-500/20 rounded-full px-6 py-3 mb-8">
+                <Crown className="w-6 h-6 text-brand-400" />
+                <span className="text-lg font-semibold bg-gradient-to-r from-brand-300 to-purple-300 bg-clip-text text-transparent">
+                  $5.99/month
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="animate-fade-in-up">
@@ -121,7 +149,9 @@ export default function Pro() {
             </h1>
 
             <p className="text-xl md:text-2xl text-surface-200 max-w-2xl mx-auto mb-4">
-              Unlock the full power of NullUpload. No limits, no ads, maximum quality.
+              {isPro
+                ? 'You have full access to all Pro features. Thank you for subscribing!'
+                : 'Unlock the full power of NullUpload. No limits, no ads, maximum quality.'}
             </p>
             <p className="text-surface-200/60 max-w-xl mx-auto">
               Same privacy-first approach. Same client-side processing. Just more of everything.
@@ -129,6 +159,35 @@ export default function Pro() {
           </div>
         </div>
       </section>
+
+      {/* Success / Canceled banners */}
+      {showSuccess && (
+        <section className="pb-8">
+          <div className="max-w-lg mx-auto px-4">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 animate-scale-in text-center">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
+              <p className="text-emerald-300 font-semibold text-lg">Welcome to Pro!</p>
+              <p className="text-emerald-200/70 text-sm mt-1">
+                Your subscription is active. Enjoy unlimited processing, ad-free experience, and
+                more.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {showCanceled && (
+        <section className="pb-8">
+          <div className="max-w-lg mx-auto px-4">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 animate-scale-in text-center">
+              <p className="text-amber-300 font-semibold text-lg">Checkout canceled</p>
+              <p className="text-amber-200/70 text-sm mt-1">
+                No worries — you can upgrade anytime. Your free tier remains active.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Free vs Pro Comparison Table */}
       <section className="py-20">
@@ -141,15 +200,21 @@ export default function Pro() {
             {/* Table Header */}
             <div className="grid grid-cols-3 border-b border-surface-800">
               <div className="px-6 py-5">
-                <span className="text-surface-200 font-semibold text-sm uppercase tracking-wider">Feature</span>
+                <span className="text-surface-200 font-semibold text-sm uppercase tracking-wider">
+                  Feature
+                </span>
               </div>
               <div className="px-6 py-5 text-center bg-surface-800/30">
-                <span className="text-surface-200 font-semibold text-sm uppercase tracking-wider">Free</span>
+                <span className="text-surface-200 font-semibold text-sm uppercase tracking-wider">
+                  Free
+                </span>
               </div>
               <div className="px-6 py-5 text-center bg-brand-500/5">
                 <div className="flex items-center justify-center gap-2">
                   <Crown className="w-4 h-4 text-brand-400" />
-                  <span className="text-brand-400 font-semibold text-sm uppercase tracking-wider">Pro</span>
+                  <span className="text-brand-400 font-semibold text-sm uppercase tracking-wider">
+                    Pro
+                  </span>
                 </div>
               </div>
             </div>
@@ -197,7 +262,7 @@ export default function Pro() {
         </div>
       </section>
 
-      {/* Waitlist */}
+      {/* CTA Section */}
       <section className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-t from-brand-600/5 via-transparent to-transparent pointer-events-none" />
         <div className="max-w-lg mx-auto px-4 text-center relative">
@@ -206,55 +271,64 @@ export default function Pro() {
               <Sparkles className="w-10 h-10 text-brand-400" />
             </div>
 
-            <h2 className="text-3xl font-bold text-white mb-3">
-              Coming Soon — Join the Waitlist
-            </h2>
-            <p className="text-surface-200 mb-8">
-              Be the first to know when NullUpload Pro launches. We'll send you one email — no spam, ever.
-            </p>
-
-            {submitted ? (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-6 animate-scale-in">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-3" />
-                <p className="text-emerald-300 font-semibold text-lg">You're on the list!</p>
-                <p className="text-emerald-200/70 text-sm mt-1">
-                  We'll let you know as soon as Pro is ready.
-                </p>
+            {loading ? (
+              <div className="flex items-center justify-center gap-3 py-8">
+                <Loader2 className="w-6 h-6 text-brand-400 animate-spin" />
+                <span className="text-surface-200">Checking subscription status…</span>
               </div>
-            ) : alreadyJoined ? (
-              <div className="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-6 animate-scale-in">
-                <CheckCircle2 className="w-10 h-10 text-brand-400 mx-auto mb-3" />
-                <p className="text-brand-300 font-semibold text-lg">You're already on the list!</p>
-                <p className="text-brand-200/70 text-sm mt-1">
-                  We'll notify you when Pro launches. Thanks for your interest!
+            ) : isPro ? (
+              <>
+                <h2 className="text-3xl font-bold text-white mb-3">Manage Your Subscription</h2>
+                <p className="text-surface-200 mb-8">
+                  Update your payment method, change your plan, or view billing history.
+                  {subscription?.currentPeriodEnd && (
+                    <>
+                      <br />
+                      <span className="text-surface-200/60 text-sm">
+                        Current period ends{' '}
+                        {new Date(subscription.currentPeriodEnd * 1000).toLocaleDateString()}
+                      </span>
+                    </>
+                  )}
                 </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-700" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    className="w-full bg-surface-900 border border-surface-800 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder:text-surface-700 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500/50 transition"
-                  />
-                </div>
                 <button
-                  type="submit"
-                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white font-semibold px-6 py-3.5 rounded-xl transition shadow-lg shadow-brand-600/25 shrink-0"
+                  onClick={handlePortal}
+                  disabled={portalLoading}
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-8 py-3.5 rounded-xl transition shadow-lg shadow-brand-600/25"
                 >
-                  Join Waitlist
+                  {portalLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Settings className="w-4 h-4" />
+                  )}
+                  Manage Subscription
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="text-3xl font-bold text-white mb-3">Ready to go Pro?</h2>
+                <p className="text-surface-200 mb-8">
+                  Unlock unlimited processing, ad-free experience, and maximum quality for just{' '}
+                  <span className="text-white font-semibold">$5.99/month</span>. Cancel anytime.
+                </p>
+                <button
+                  onClick={handleCheckout}
+                  disabled={checkoutLoading}
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-8 py-3.5 rounded-xl transition shadow-lg shadow-brand-600/25"
+                >
+                  {checkoutLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                  Subscribe — $5.99/month
                   <ArrowRight className="w-4 h-4" />
                 </button>
-              </form>
+                <p className="text-surface-700 text-xs mt-4">
+                  Powered by Stripe. Secure payment processing. Cancel anytime.
+                </p>
+              </>
             )}
-
-            <p className="text-surface-700 text-xs mt-4">
-              No spam, unsubscribe anytime. Your email stays in your browser until we add a backend.
-            </p>
           </div>
         </div>
       </section>

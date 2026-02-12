@@ -1,25 +1,104 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from 'react'
 
 export type Tier = 'free' | 'pro'
+
+interface SubscriptionInfo {
+  status: string
+  currentPeriodEnd: number
+}
 
 interface TierContextValue {
   tier: Tier
   isPro: boolean
-  // Placeholder for future auth integration
-  setTier: (tier: Tier) => void
+  loading: boolean
+  subscription: SubscriptionInfo | null
+  checkout: () => Promise<void>
+  openPortal: () => Promise<void>
+  refreshStatus: (sessionId?: string) => Promise<void>
 }
 
 const TierContext = createContext<TierContextValue | null>(null)
 
 export function TierProvider({ children }: { children: ReactNode }) {
-  const [tier, setTierState] = useState<Tier>('free')
+  const [tier, setTier] = useState<Tier>('free')
+  const [loading, setLoading] = useState(true)
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null)
 
-  const setTier = useCallback((newTier: Tier) => {
-    setTierState(newTier)
+  const refreshStatus = useCallback(async (sessionId?: string) => {
+    try {
+      const params = new URLSearchParams()
+      if (sessionId) params.set('session_id', sessionId)
+      const url = `/api/status${params.toString() ? `?${params}` : ''}`
+      const res = await fetch(url, { credentials: 'include' })
+      if (!res.ok) throw new Error('Status check failed')
+      const data = await res.json()
+      setTier(data.isPro ? 'pro' : 'free')
+      setSubscription(data.subscription ?? null)
+    } catch (err) {
+      console.error('Failed to check subscription status:', err)
+      setTier('free')
+      setSubscription(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Check status on mount
+  useEffect(() => {
+    refreshStatus()
+  }, [refreshStatus])
+
+  const checkout = useCallback(async () => {
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Checkout failed')
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err) {
+      console.error('Failed to create checkout session:', err)
+    }
+  }, [])
+
+  const openPortal = useCallback(async () => {
+    try {
+      const res = await fetch('/api/portal', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Portal failed')
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (err) {
+      console.error('Failed to open customer portal:', err)
+    }
   }, [])
 
   return (
-    <TierContext.Provider value={{ tier, isPro: tier === 'pro', setTier }}>
+    <TierContext.Provider
+      value={{
+        tier,
+        isPro: tier === 'pro',
+        loading,
+        subscription,
+        checkout,
+        openPortal,
+        refreshStatus,
+      }}
+    >
       {children}
     </TierContext.Provider>
   )
