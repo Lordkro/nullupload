@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           isPro: true,
           subscription: {
             status: subscription.status,
-            currentPeriodEnd: subscription.current_period_end,
+            currentPeriodEnd: (subscription as any).current_period_end,
           },
         })
       }
@@ -92,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         isPro: true,
         subscription: {
           status: sub.status,
-          currentPeriodEnd: sub.current_period_end,
+          currentPeriodEnd: (sub as any).current_period_end,
         },
       })
     }
