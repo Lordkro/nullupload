@@ -1,4 +1,5 @@
-import { Outlet, NavLink, Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom'
 import {
   Shield,
   Minimize2,
@@ -9,6 +10,9 @@ import {
   FileText,
   Scissors,
   Merge,
+  Image,
+  FileType,
+  ChevronDown,
 } from 'lucide-react'
 import Logo from './Logo'
 
@@ -16,16 +20,74 @@ const imageNav = [
   { to: '/compress', label: 'Compress', icon: Minimize2 },
   { to: '/convert', label: 'Convert', icon: RefreshCw },
   { to: '/resize', label: 'Resize', icon: Scaling },
-  { to: '/metadata', label: 'Strip EXIF', icon: FileX2 },
+  { to: '/metadata', label: 'Strip Metadata', icon: FileX2 },
 ]
 
 const pdfNav = [
-  { to: '/pdf/merge', label: 'Merge PDF', icon: Merge },
-  { to: '/pdf/split', label: 'Split PDF', icon: Scissors },
-  { to: '/pdf/compress', label: 'Compress PDF', icon: FileText },
+  { to: '/pdf/merge', label: 'Merge', icon: Merge },
+  { to: '/pdf/split', label: 'Split', icon: Scissors },
+  { to: '/pdf/compress', label: 'Compress', icon: FileText },
 ]
 
 const allNav = [...imageNav, ...pdfNav]
+
+function NavDropdown({ label, icon: Icon, items }: { label: string; icon: React.ElementType; items: typeof imageNav }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const location = useLocation()
+  const isGroupActive = items.some(item => location.pathname === item.to)
+
+  useEffect(() => {
+    setOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
+          isGroupActive
+            ? 'bg-brand-600/20 text-brand-400'
+            : 'text-surface-200 hover:bg-surface-800 hover:text-white'
+        }`}
+      >
+        <Icon className="w-4 h-4" />
+        {label}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 bg-surface-900 border border-surface-800 rounded-xl shadow-xl shadow-black/30 py-1.5 min-w-[180px] z-50 animate-fade-in">
+          {items.map(({ to, label: itemLabel, icon: ItemIcon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) =>
+                `flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition ${
+                  isActive
+                    ? 'bg-brand-600/15 text-brand-400'
+                    : 'text-surface-200 hover:bg-surface-800 hover:text-white'
+                }`
+              }
+            >
+              <ItemIcon className="w-4 h-4" />
+              {itemLabel}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Layout() {
   return (
@@ -44,44 +106,8 @@ export default function Layout() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {/* Image tools */}
-            {imageNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-brand-600/20 text-brand-400'
-                      : 'text-surface-200 hover:bg-surface-800 hover:text-white'
-                  }`
-                }
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </NavLink>
-            ))}
-
-            {/* Separator */}
-            <div className="w-px h-6 bg-surface-800 mx-1" />
-
-            {/* PDF tools */}
-            {pdfNav.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive
-                      ? 'bg-brand-600/20 text-brand-400'
-                      : 'text-surface-200 hover:bg-surface-800 hover:text-white'
-                  }`
-                }
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </NavLink>
-            ))}
+            <NavDropdown label="Image Tools" icon={Image} items={imageNav} />
+            <NavDropdown label="PDF Tools" icon={FileType} items={pdfNav} />
           </nav>
 
           <div className="flex items-center gap-3">

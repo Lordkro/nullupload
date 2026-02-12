@@ -49,7 +49,7 @@ const imageTools = [
   {
     to: '/metadata',
     icon: FileX2,
-    title: 'EXIF / Metadata Stripper',
+    title: 'Strip Metadata',
     desc: 'Remove hidden metadata from photos — GPS, camera info, and more.',
     color: 'text-rose-400 bg-rose-500/10',
     cta: 'Strip Metadata',
