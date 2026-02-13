@@ -6,8 +6,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY
-  const priceId = process.env.STRIPE_PRICE_ID
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim()
+  const priceId = process.env.STRIPE_PRICE_ID?.trim()
   if (!secretKey || !priceId) {
     return res.status(500).json({ error: 'Stripe not configured' })
   }
@@ -24,7 +24,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({ url: session.url })
   } catch (err) {
-    console.error('Checkout error:', err)
-    return res.status(500).json({ error: 'Failed to create checkout session' })
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('Checkout error:', message)
+    return res.status(500).json({ error: 'Failed to create checkout session', detail: message })
   }
 }

@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim()
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!secretKey) {
     return res.status(500).json({ error: 'Stripe not configured' })

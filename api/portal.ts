@@ -17,8 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const secretKey = process.env.STRIPE_SECRET_KEY
-  const jwtSecret = process.env.JWT_SECRET
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim()
+  const jwtSecret = process.env.JWT_SECRET?.trim()
   if (!secretKey || !jwtSecret) {
     return res.status(500).json({ error: 'Server not configured' })
   }
