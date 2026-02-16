@@ -29,8 +29,6 @@ const pdfNav = [
   { to: '/pdf/compress', label: 'Compress', icon: FileText },
 ]
 
-const allNav = [...imageNav, ...pdfNav]
-
 function NavDropdown({ label, icon: Icon, items }: { label: string; icon: React.ElementType; items: typeof imageNav }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -90,6 +88,14 @@ function NavDropdown({ label, icon: Icon, items }: { label: string; icon: React.
 }
 
 export default function Layout() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const location = useLocation()
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [location.pathname])
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -105,13 +111,14 @@ export default function Layout() {
             </span>
           </Link>
 
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1">
             <NavDropdown label="Image Tools" icon={Image} items={imageNav} />
             <NavDropdown label="PDF Tools" icon={FileType} items={pdfNav} />
           </nav>
 
-          <div className="flex items-center gap-3">
-            {/* Pro link */}
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center gap-3">
             <NavLink
               to="/pro"
               className={({ isActive }) =>
@@ -125,47 +132,95 @@ export default function Layout() {
               <Sparkles className="w-3.5 h-3.5" />
               Pro
             </NavLink>
-
-            {/* Privacy badge */}
-            <div className="hidden sm:flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5">
               <Shield className="w-3.5 h-3.5" />
               100% Client-Side
             </div>
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden p-2 text-surface-200 hover:text-white"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
 
-        {/* Mobile nav */}
-        <nav className="md:hidden flex overflow-x-auto border-t border-surface-800 px-2">
-          {allNav.map(({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-1 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition ${
-                  isActive
-                    ? 'text-brand-400 border-b-2 border-brand-400'
-                    : 'text-surface-200'
-                }`
-              }
-            >
-              <Icon className="w-4 h-4" />
-              {label}
-            </NavLink>
-          ))}
-          <NavLink
-            to="/pro"
-            className={({ isActive }) =>
-              `flex items-center gap-1 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition ${
-                isActive
-                  ? 'text-brand-400 border-b-2 border-brand-400'
-                  : 'text-brand-400/70'
-              }`
-            }
-          >
-            <Sparkles className="w-4 h-4" />
-            Pro
-          </NavLink>
-        </nav>
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-surface-900 border-t border-surface-800 absolute top-16 left-0 right-0 shadow-xl z-50 max-h-[80vh] overflow-y-auto">
+            <div className="p-4 space-y-2">
+              {/* Image Tools section */}
+              <div className="text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Image Tools</div>
+              {imageNav.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+                      isActive
+                        ? 'bg-brand-600/15 text-brand-400'
+                        : 'text-surface-200 hover:bg-surface-800'
+                    }`
+                  }
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </NavLink>
+              ))}
+
+              {/* PDF Tools section */}
+              <div className="text-xs font-semibold text-surface-400 uppercase tracking-wider mt-4 mb-2">PDF Tools</div>
+              {pdfNav.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+                      isActive
+                        ? 'bg-brand-600/15 text-brand-400'
+                        : 'text-surface-200 hover:bg-surface-800'
+                    }`
+                  }
+                >
+                  <Icon className="w-4 h-4" />
+                  {label}
+                </NavLink>
+              ))}
+
+              {/* Pro link */}
+              <div className="mt-4 pt-4 border-t border-surface-800">
+                <NavLink
+                  to="/pro"
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
+                      isActive
+                        ? 'bg-gradient-to-r from-brand-500/15 to-purple-500/15 text-brand-400'
+                        : 'text-brand-400 hover:bg-brand-500/10'
+                    }`
+                  }
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Upgrade to Pro — $5.99/mo
+                </NavLink>
+              </div>
+
+              {/* Privacy badge */}
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-emerald-400 bg-emerald-500/10 rounded-lg mt-2">
+                <Shield className="w-4 h-4" />
+                100% Client-Side Processing
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Main */}
