@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import DropZone from '../components/DropZone'
 import PrivacyBadge from '../components/PrivacyBadge'
 import ImagePreview from '../components/ImagePreview'
@@ -7,19 +7,11 @@ import DownloadButton from '../components/DownloadButton'
 import BatchFileList from '../components/BatchFileList'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
-import ProBadge from '../components/ProBadge'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
-import { useTier } from '../contexts/TierContext'
 import { downloadAsZip } from '../utils/batch'
 import type { BatchFile } from '../components/BatchFileList'
-
-const TOOL_ID = 'converter'
-const FREE_MAX_QUALITY = 0.8
 
 type Format = 'image/jpeg' | 'image/png' | 'image/webp' | 'image/avif'
 
@@ -66,19 +58,11 @@ export default function Converter() {
     canonical: 'https://nullupload.dev/convert',
   })
 
-  const { isPro } = useTier()
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =
-    useUsageLimits(TOOL_ID)
-
   const [targetFormat, setTargetFormat] = useState<Format>('image/webp')
   const [quality, setQuality] = useState(0.85)
   const [files, setFiles] = useState<BatchFile[]>([])
   const [downloadingZip, setDownloadingZip] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
-
-  const effectiveMaxQuality = isPro ? 1 : FREE_MAX_QUALITY
-  const effectiveQuality = Math.min(quality, effectiveMaxQuality)
 
   const ext = formats.find((f) => f.value === targetFormat)?.ext ?? '.bin'
 
@@ -91,41 +75,7 @@ export default function Converter() {
     return { blob, url }
   }
 
-  const handleFiles = useCallback(
-    async (incoming: File[]) => {
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
-      const clamped = incoming.slice(0, clampBatch(incoming.length))
-      if (clamped.length < incoming.length) {
-        addToast(`Free tier allows ${batchLimit} files at once. ${incoming.length - clamped.length} files were skipped.`, 'warning')
-      }
-
-      if (!canProcess(clamped.length)) {
-        const processable = remaining
-        if (processable <= 0) {
-          setShowUpgrade(true)
-          return
-        }
-        const trimmed = clamped.slice(0, processable)
-        addToast(`Only ${processable} free uses remaining. Processing ${trimmed.length} of ${clamped.length} files.`, 'warning')
-        return handleFilesInternal(trimmed)
-      }
-
-      return handleFilesInternal(clamped)
-    },
-    [limitReached, clampBatch, canProcess, remaining, batchLimit, addToast, targetFormat, effectiveQuality],
-  )
-
-  const handleFilesInternal = async (incoming: File[]) => {
-    const success = recordUsage(incoming.length)
-    if (!success) {
-      setShowUpgrade(true)
-      return
-    }
-
+  const handleFiles = async (incoming: File[]) => {
     const newFiles: BatchFile[] = incoming.map((f) => ({
       id: crypto.randomUUID(),
       original: f,
@@ -136,7 +86,7 @@ export default function Converter() {
 
     for (const bf of newFiles) {
       try {
-        const result = await convertFile(bf.original, targetFormat, effectiveQuality)
+        const result = await convertFile(bf.original, targetFormat, quality)
         setFiles((prev) =>
           prev.map((f) => (f.id === bf.id ? { ...f, result, processing: false } : f)),
         )
@@ -164,7 +114,7 @@ export default function Converter() {
     const currentFiles = [...files]
     for (const bf of currentFiles) {
       try {
-        const result = await convertFile(bf.original, targetFormat, effectiveQuality)
+        const result = await convertFile(bf.original, targetFormat, quality)
         setFiles((prev) =>
           prev.map((f) => (f.id === bf.id ? { ...f, result, processing: false } : f)),
         )
@@ -216,7 +166,6 @@ export default function Converter() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="Converter" />
         </div>
       </div>
 
@@ -248,40 +197,20 @@ export default function Converter() {
                 ))}
               </div>
             </div>
-            <div className="relative">
+            <div>
               <div className="flex justify-between mb-2">
-                <label className="text-sm font-medium text-surface-200 flex items-center gap-2">
-                  Quality
-                  {!isPro && quality > FREE_MAX_QUALITY && (
-                    <ProBadge />
-                  )}
-                </label>
-                <span className="text-sm text-white font-mono">
-                  {Math.round(effectiveQuality * 100)}%
-                  {!isPro && quality > FREE_MAX_QUALITY && (
-                    <span className="text-surface-700 ml-1">(max {Math.round(FREE_MAX_QUALITY * 100)}% on free)</span>
-                  )}
-                </span>
+                <label className="text-sm font-medium text-surface-200">Quality</label>
+                <span className="text-sm text-white font-mono">{Math.round(quality * 100)}%</span>
               </div>
-              <div className="relative">
-                <input
-                  type="range"
-                  min={0.1}
-                  max={1}
-                  step={0.05}
-                  value={quality}
-                  onChange={(e) => setQuality(parseFloat(e.target.value))}
-                  className="w-full accent-brand-500"
-                />
-                {!isPro && (
-                  <div
-                    className="absolute top-0 h-full pointer-events-none"
-                    style={{ left: `${FREE_MAX_QUALITY * 100}%`, right: 0 }}
-                  >
-                    <div className="h-full bg-surface-950/50 rounded-r-lg" />
-                  </div>
-                )}
-              </div>
+              <input
+                type="range"
+                min={0.1}
+                max={1}
+                step={0.05}
+                value={quality}
+                onChange={(e) => setQuality(parseFloat(e.target.value))}
+                className="w-full accent-brand-500"
+              />
             </div>
             <button
               onClick={reconvert}
@@ -354,10 +283,6 @@ export default function Converter() {
             />
           )}
         </div>
-      )}
-
-      {showUpgrade && (
-        <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="conversion" />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />

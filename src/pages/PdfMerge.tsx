@@ -6,15 +6,10 @@ import FileSizeBar from '../components/FileSizeBar'
 import DownloadButton from '../components/DownloadButton'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
 import { formatFileSize } from '../utils/format'
-
-const TOOL_ID = 'pdf-merge'
 
 interface PdfEntry {
   id: string
@@ -30,13 +25,9 @@ export default function PdfMerge() {
     canonical: 'https://nullupload.dev/pdf/merge',
   })
 
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess } =
-    useUsageLimits(TOOL_ID)
-
   const [entries, setEntries] = useState<PdfEntry[]>([])
   const [merging, setMerging] = useState(false)
   const [result, setResult] = useState<{ url: string; size: number } | null>(null)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
 
   // Drag-and-drop reorder state
@@ -68,11 +59,6 @@ export default function PdfMerge() {
         return
       }
 
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
       // Clear previous result
       if (result?.url) URL.revokeObjectURL(result.url)
       setResult(null)
@@ -97,7 +83,7 @@ export default function PdfMerge() {
         }
       }
     },
-    [limitReached, addToast, result],
+    [addToast, result],
   )
 
   const handleRemove = (id: string) => {
@@ -135,17 +121,6 @@ export default function PdfMerge() {
   const handleMerge = async () => {
     if (entries.length < 2) {
       addToast('Add at least 2 PDFs to merge.', 'warning')
-      return
-    }
-
-    if (!canProcess(1)) {
-      setShowUpgrade(true)
-      return
-    }
-
-    const success = recordUsage(1)
-    if (!success) {
-      setShowUpgrade(true)
       return
     }
 
@@ -191,7 +166,6 @@ export default function PdfMerge() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="PDF Merge" />
         </div>
       </div>
 
@@ -305,7 +279,6 @@ export default function PdfMerge() {
         </div>
       )}
 
-      {showUpgrade && <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="PDF Merge" />}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import DropZone from '../components/DropZone'
 import PrivacyBadge from '../components/PrivacyBadge'
 import ImagePreview from '../components/ImagePreview'
@@ -7,17 +7,12 @@ import DownloadButton from '../components/DownloadButton'
 import BatchFileList from '../components/BatchFileList'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
 import { downloadAsZip } from '../utils/batch'
 import { Link as LinkIcon, Unlink } from 'lucide-react'
 import type { BatchFile } from '../components/BatchFileList'
-
-const TOOL_ID = 'resizer'
 
 interface Dims {
   width: number
@@ -78,9 +73,6 @@ export default function Resizer() {
     canonical: 'https://nullupload.dev/resize',
   })
 
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =
-    useUsageLimits(TOOL_ID)
-
   const [files, setFiles] = useState<BatchFile[]>([])
   const [originalDims, setOriginalDims] = useState<Dims | null>(null)
   const [width, setWidth] = useState(0)
@@ -89,7 +81,6 @@ export default function Resizer() {
   const [mode, setMode] = useState<'pixels' | 'percent'>('pixels')
   const [percent, setPercent] = useState(50)
   const [downloadingZip, setDownloadingZip] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
 
   const singleMode = files.length === 1
@@ -114,35 +105,7 @@ export default function Resizer() {
     }
   }, [percent, mode, originalDims])
 
-  const handleFiles = useCallback(
-    (incoming: File[]) => {
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
-      const clamped = incoming.slice(0, clampBatch(incoming.length))
-      if (clamped.length < incoming.length) {
-        addToast(`Free tier allows ${batchLimit} files at once. ${incoming.length - clamped.length} files were skipped.`, 'warning')
-      }
-
-      if (!canProcess(clamped.length)) {
-        const processable = remaining
-        if (processable <= 0) {
-          setShowUpgrade(true)
-          return
-        }
-        addToast(`Only ${processable} free uses remaining.`, 'warning')
-        const trimmed = clamped.slice(0, processable)
-        return handleFilesInternal(trimmed)
-      }
-
-      return handleFilesInternal(clamped)
-    },
-    [limitReached, clampBatch, canProcess, remaining, batchLimit, addToast, originalDims],
-  )
-
-  const handleFilesInternal = (incoming: File[]) => {
+  const handleFiles = (incoming: File[]) => {
     const newFiles: BatchFile[] = incoming.map((f) => ({
       id: crypto.randomUUID(),
       original: f,
@@ -161,13 +124,6 @@ export default function Resizer() {
 
   const doResize = async () => {
     if (width < 1 || height < 1) return
-
-    // Record usage for resize action
-    const success = recordUsage(files.length)
-    if (!success) {
-      setShowUpgrade(true)
-      return
-    }
 
     setFiles((prev) =>
       prev.map((f) => {
@@ -244,7 +200,6 @@ export default function Resizer() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="Resizer" />
         </div>
       </div>
 
@@ -409,10 +364,6 @@ export default function Resizer() {
             />
           )}
         </div>
-      )}
-
-      {showUpgrade && (
-        <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="resizing" />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
