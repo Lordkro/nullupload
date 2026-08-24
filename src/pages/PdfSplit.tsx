@@ -6,15 +6,10 @@ import FileSizeBar from '../components/FileSizeBar'
 import DownloadButton from '../components/DownloadButton'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
 import { formatFileSize } from '../utils/format'
-
-const TOOL_ID = 'pdf-split'
 
 interface PageInfo {
   num: number
@@ -30,16 +25,12 @@ export default function PdfSplit() {
     canonical: 'https://nullupload.dev/pdf/split',
   })
 
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess } =
-    useUsageLimits(TOOL_ID)
-
   const [file, setFile] = useState<File | null>(null)
   const [pages, setPages] = useState<PageInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [splitting, setSplitting] = useState(false)
   const [rangeInput, setRangeInput] = useState('')
   const [result, setResult] = useState<{ url: string; size: number } | null>(null)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
 
   useEffect(() => {
@@ -55,11 +46,6 @@ export default function PdfSplit() {
       )
       if (!pdf) {
         addToast('Please select a PDF file.', 'warning')
-        return
-      }
-
-      if (limitReached) {
-        setShowUpgrade(true)
         return
       }
 
@@ -95,7 +81,7 @@ export default function PdfSplit() {
         setLoading(false)
       }
     },
-    [limitReached, addToast, result],
+    [addToast, result],
   )
 
   const togglePage = (num: number) => {
@@ -143,17 +129,6 @@ export default function PdfSplit() {
     const selectedPages = pages.filter((p) => p.selected)
     if (selectedPages.length === 0) {
       addToast('Select at least one page.', 'warning')
-      return
-    }
-
-    if (!canProcess(1)) {
-      setShowUpgrade(true)
-      return
-    }
-
-    const success = recordUsage(1)
-    if (!success) {
-      setShowUpgrade(true)
       return
     }
 
@@ -209,7 +184,6 @@ export default function PdfSplit() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="PDF Split" />
         </div>
       </div>
 
@@ -358,7 +332,6 @@ export default function PdfSplit() {
         </div>
       )}
 
-      {showUpgrade && <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="PDF Split" />}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

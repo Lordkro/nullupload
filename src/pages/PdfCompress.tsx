@@ -6,15 +6,10 @@ import FileSizeBar from '../components/FileSizeBar'
 import DownloadButton from '../components/DownloadButton'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
 import { formatFileSize } from '../utils/format'
-
-const TOOL_ID = 'pdf-compress'
 
 type Quality = 'low' | 'medium' | 'high'
 
@@ -32,14 +27,10 @@ export default function PdfCompress() {
     canonical: 'https://nullupload.dev/pdf/compress',
   })
 
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess } =
-    useUsageLimits(TOOL_ID)
-
   const [file, setFile] = useState<File | null>(null)
   const [quality, setQuality] = useState<Quality>('medium')
   const [compressing, setCompressing] = useState(false)
   const [result, setResult] = useState<{ url: string; size: number } | null>(null)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
 
   useEffect(() => {
@@ -58,31 +49,15 @@ export default function PdfCompress() {
         return
       }
 
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
       if (result?.url) URL.revokeObjectURL(result.url)
       setResult(null)
       setFile(pdf)
     },
-    [limitReached, addToast, result],
+    [addToast, result],
   )
 
   const handleCompress = async () => {
     if (!file) return
-
-    if (!canProcess(1)) {
-      setShowUpgrade(true)
-      return
-    }
-
-    const success = recordUsage(1)
-    if (!success) {
-      setShowUpgrade(true)
-      return
-    }
 
     setCompressing(true)
     if (result?.url) URL.revokeObjectURL(result.url)
@@ -163,7 +138,6 @@ export default function PdfCompress() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="PDF Compress" />
         </div>
       </div>
 
@@ -266,9 +240,6 @@ export default function PdfCompress() {
         </div>
       )}
 
-      {showUpgrade && (
-        <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="PDF Compress" />
-      )}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )

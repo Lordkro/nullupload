@@ -6,7 +6,6 @@ import {
   RefreshCw,
   Scaling,
   FileX2,
-  Sparkles,
   FileText,
   Scissors,
   Merge,
@@ -119,19 +118,6 @@ export default function Layout() {
 
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-3">
-            <NavLink
-              to="/pro"
-              className={({ isActive }) =>
-                `flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition border ${
-                  isActive
-                    ? 'bg-gradient-to-r from-brand-500/15 to-purple-500/15 border-brand-500/30 text-brand-400'
-                    : 'border-brand-500/20 text-brand-400 hover:bg-brand-500/10'
-                }`
-              }
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Pro
-            </NavLink>
             <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1.5">
               <Shield className="w-3.5 h-3.5" />
               100% Client-Side
@@ -196,25 +182,8 @@ export default function Layout() {
                 </NavLink>
               ))}
 
-              {/* Pro link */}
-              <div className="mt-4 pt-4 border-t border-surface-800">
-                <NavLink
-                  to="/pro"
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition ${
-                      isActive
-                        ? 'bg-gradient-to-r from-brand-500/15 to-purple-500/15 text-brand-400'
-                        : 'text-brand-400 hover:bg-brand-500/10'
-                    }`
-                  }
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Upgrade to Pro — $5.99/mo
-                </NavLink>
-              </div>
-
               {/* Privacy badge */}
-              <div className="flex items-center gap-2 px-4 py-3 text-sm text-emerald-400 bg-emerald-500/10 rounded-lg mt-2">
+              <div className="flex items-center gap-2 px-4 py-3 text-sm text-emerald-400 bg-emerald-500/10 rounded-lg mt-4">
                 <Shield className="w-4 h-4" />
                 100% Client-Side Processing
               </div>

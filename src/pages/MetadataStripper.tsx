@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import piexif from 'piexifjs'
 import DropZone from '../components/DropZone'
 import PrivacyBadge from '../components/PrivacyBadge'
@@ -7,17 +7,12 @@ import DownloadButton from '../components/DownloadButton'
 import BatchFileList from '../components/BatchFileList'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
 import { downloadAsZip } from '../utils/batch'
 import { AlertTriangle, MapPin, Camera, Calendar, Tag } from 'lucide-react'
 import type { BatchFile } from '../components/BatchFileList'
-
-const TOOL_ID = 'metadata'
 
 interface MetadataEntry {
   section: string
@@ -160,54 +155,16 @@ export default function MetadataStripper() {
     canonical: 'https://nullupload.dev/metadata',
   })
 
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =
-    useUsageLimits(TOOL_ID)
-
   const [files, setFiles] = useState<BatchFile[]>([])
   const [metadata, setMetadata] = useState<MetadataEntry[]>([])
   const [isJpeg, setIsJpeg] = useState(false)
   const [downloadingZip, setDownloadingZip] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
 
   const singleMode = files.length === 1
   const singleFile = singleMode ? files[0] : null
 
-  const handleFiles = useCallback(
-    async (incoming: File[]) => {
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
-      const clamped = incoming.slice(0, clampBatch(incoming.length))
-      if (clamped.length < incoming.length) {
-        addToast(`Free tier allows ${batchLimit} files at once. ${incoming.length - clamped.length} files were skipped.`, 'warning')
-      }
-
-      if (!canProcess(clamped.length)) {
-        const processable = remaining
-        if (processable <= 0) {
-          setShowUpgrade(true)
-          return
-        }
-        addToast(`Only ${processable} free uses remaining.`, 'warning')
-        const trimmed = clamped.slice(0, processable)
-        return handleFilesInternal(trimmed)
-      }
-
-      return handleFilesInternal(clamped)
-    },
-    [limitReached, clampBatch, canProcess, remaining, batchLimit, addToast],
-  )
-
-  const handleFilesInternal = async (incoming: File[]) => {
-    const success = recordUsage(incoming.length)
-    if (!success) {
-      setShowUpgrade(true)
-      return
-    }
-
+  const handleFiles = async (incoming: File[]) => {
     const newFiles: BatchFile[] = incoming.map((f) => ({
       id: crypto.randomUUID(),
       original: f,
@@ -289,7 +246,6 @@ export default function MetadataStripper() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="Metadata Stripper" />
         </div>
       </div>
 
@@ -404,10 +360,6 @@ export default function MetadataStripper() {
             />
           )}
         </div>
-      )}
-
-      {showUpgrade && (
-        <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="metadata stripping" />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useRef } from 'react'
 import imageCompression from 'browser-image-compression'
 import DropZone from '../components/DropZone'
 import PrivacyBadge from '../components/PrivacyBadge'
@@ -8,19 +8,11 @@ import DownloadButton from '../components/DownloadButton'
 import BatchFileList from '../components/BatchFileList'
 import ToastContainer from '../components/ToastContainer'
 import ProcessingSpinner from '../components/ProcessingSpinner'
-import UsageIndicator from '../components/UsageIndicator'
-import UpgradePrompt from '../components/UpgradePrompt'
-import ProBadge from '../components/ProBadge'
 import AdPlaceholder from '../components/AdPlaceholder'
 import { useToast } from '../hooks/useToast'
 import { useSEO } from '../hooks/useSEO'
-import { useUsageLimits } from '../hooks/useUsageLimits'
-import { useTier } from '../contexts/TierContext'
 import { downloadAsZip } from '../utils/batch'
 import type { BatchFile } from '../components/BatchFileList'
-
-const TOOL_ID = 'compressor'
-const FREE_MAX_QUALITY = 0.8
 
 export default function Compressor() {
   useSEO({
@@ -30,21 +22,12 @@ export default function Compressor() {
     canonical: 'https://nullupload.dev/compress',
   })
 
-  const { isPro } = useTier()
-  const { remaining, dailyLimit, limitReached, recordUsage, canProcess, clampBatch, batchLimit } =
-    useUsageLimits(TOOL_ID)
-
   const [quality, setQuality] = useState(0.7)
   const [maxSizeMB, setMaxSizeMB] = useState(1)
   const [files, setFiles] = useState<BatchFile[]>([])
   const [downloadingZip, setDownloadingZip] = useState(false)
-  const [showUpgrade, setShowUpgrade] = useState(false)
   const { toasts, addToast, removeToast } = useToast()
   const processingRef = useRef(false)
-
-  // Gate quality: free tier max 80%
-  const effectiveMaxQuality = isPro ? 1 : FREE_MAX_QUALITY
-  const effectiveQuality = Math.min(quality, effectiveMaxQuality)
 
   const singleMode = files.length === 1
   const singleFile = singleMode ? files[0] : null
@@ -60,45 +43,7 @@ export default function Compressor() {
     return { blob: compressed, url }
   }
 
-  const handleFiles = useCallback(
-    async (incoming: File[]) => {
-      // Gate: check limits
-      if (limitReached) {
-        setShowUpgrade(true)
-        return
-      }
-
-      // Gate: batch limit
-      const clamped = incoming.slice(0, clampBatch(incoming.length))
-      if (clamped.length < incoming.length) {
-        addToast(`Free tier allows ${batchLimit} files at once. ${incoming.length - clamped.length} files were skipped.`, 'warning')
-      }
-
-      // Check if we can process this many
-      if (!canProcess(clamped.length)) {
-        const processable = remaining
-        if (processable <= 0) {
-          setShowUpgrade(true)
-          return
-        }
-        const trimmed = clamped.slice(0, processable)
-        addToast(`Only ${processable} free uses remaining. Processing ${trimmed.length} of ${clamped.length} files.`, 'warning')
-        return handleFilesInternal(trimmed)
-      }
-
-      return handleFilesInternal(clamped)
-    },
-    [limitReached, clampBatch, canProcess, remaining, batchLimit, addToast, quality, maxSizeMB, effectiveQuality],
-  )
-
-  const handleFilesInternal = async (incoming: File[]) => {
-    // Record usage
-    const success = recordUsage(incoming.length)
-    if (!success) {
-      setShowUpgrade(true)
-      return
-    }
-
+  const handleFiles = async (incoming: File[]) => {
     const newFiles: BatchFile[] = incoming.map((f) => ({
       id: crypto.randomUUID(),
       original: f,
@@ -109,7 +54,7 @@ export default function Compressor() {
 
     for (const bf of newFiles) {
       try {
-        const result = await compressFile(bf.original, effectiveQuality, maxSizeMB)
+        const result = await compressFile(bf.original, quality, maxSizeMB)
         setFiles((prev) =>
           prev.map((f) => (f.id === bf.id ? { ...f, result, processing: false } : f)),
         )
@@ -144,7 +89,7 @@ export default function Compressor() {
     const currentFiles = [...files]
     for (const bf of currentFiles) {
       try {
-        const result = await compressFile(bf.original, effectiveQuality, maxSizeMB)
+        const result = await compressFile(bf.original, quality, maxSizeMB)
         setFiles((prev) =>
           prev.map((f) => (f.id === bf.id ? { ...f, result, processing: false } : f)),
         )
@@ -198,7 +143,6 @@ export default function Compressor() {
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <PrivacyBadge />
-          <UsageIndicator remaining={remaining} dailyLimit={dailyLimit} toolName="Compressor" />
         </div>
       </div>
 
@@ -215,38 +159,18 @@ export default function Compressor() {
           <div className="bg-surface-900 rounded-2xl p-6 border border-surface-800 space-y-5 animate-fade-in">
             <div className="relative">
               <div className="flex justify-between mb-2">
-                <label className="text-sm font-medium text-surface-200 flex items-center gap-2">
-                  Quality
-                  {!isPro && quality > FREE_MAX_QUALITY && (
-                    <ProBadge />
-                  )}
-                </label>
-                <span className="text-sm text-white font-mono">
-                  {Math.round(effectiveQuality * 100)}%
-                  {!isPro && quality > FREE_MAX_QUALITY && (
-                    <span className="text-surface-700 ml-1">(max {Math.round(FREE_MAX_QUALITY * 100)}% on free)</span>
-                  )}
-                </span>
+                <label className="text-sm font-medium text-surface-200">Quality</label>
+                <span className="text-sm text-white font-mono">{Math.round(quality * 100)}%</span>
               </div>
-              <div className="relative">
-                <input
-                  type="range"
-                  min={0.1}
-                  max={1}
-                  step={0.05}
-                  value={quality}
-                  onChange={(e) => setQuality(parseFloat(e.target.value))}
-                  className="w-full accent-brand-500"
-                />
-                {!isPro && (
-                  <div
-                    className="absolute top-0 h-full pointer-events-none"
-                    style={{ left: `${FREE_MAX_QUALITY * 100}%`, right: 0 }}
-                  >
-                    <div className="h-full bg-surface-950/50 rounded-r-lg" />
-                  </div>
-                )}
-              </div>
+              <input
+                type="range"
+                min={0.1}
+                max={1}
+                step={0.05}
+                value={quality}
+                onChange={(e) => setQuality(parseFloat(e.target.value))}
+                className="w-full accent-brand-500"
+              />
             </div>
             <div>
               <div className="flex justify-between mb-2">
@@ -329,10 +253,6 @@ export default function Compressor() {
             />
           )}
         </div>
-      )}
-
-      {showUpgrade && (
-        <UpgradePrompt onClose={() => setShowUpgrade(false)} toolName="compression" />
       )}
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
